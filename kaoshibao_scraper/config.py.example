@@ -1,0 +1,37 @@
+# 考事宝（Kaoshibao）题库抓取工具 - 配置文件模板
+# 请复制此文件为 config.py，并填入您的个人信息。
+# ==============================================================================
+
+# --- 指纹浏览器 API 配置 ---
+# 这里填写你使用的指纹浏览器（如 Adspower, Dolphin Anty 等）的本地自动化 API 地址。
+# Adspower 示例: "http://local.adspower.net:50325"
+# Dolphin Anty 示例: "http://127.0.0.1:3001"
+FINGERPRINT_BROWSER_API_URL = "http://local.adspower.net:50325"
+
+# --- 指纹浏览器 Profile ID ---
+# 填写你为本次任务专门配置的浏览器 Profile 的 ID。
+# Adspower 示例: "j2y82p9"
+FINGERPRINT_BROWSER_PROFILE_ID = "YOUR_PROFILE_ID"
+
+
+# --- AI 视觉模型 API 配置 ---
+# 填写你的 Google Gemini API Key。
+# 访问 https://aistudio.google.com/app/apikey 获取
+GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+
+
+# --- 考试宝网站配置 ---
+# 登录考试宝所需的用户名（手机号）和密码。
+KAOSHIBAO_USERNAME = "YOUR_KAOSHIBAO_USERNAME"
+KAOSHIBAO_PASSWORD = "YOUR_KAOSHIBAO_PASSWORD"
+
+# --- 目标题库配置 ---
+# 填写你希望开始抓取的第一个题目的URL。
+# 程序将从这个页面开始，自动点击“下一题”进行循环。
+# 示例: "https://www.kaoshibao.com/practice/123456/1/1"
+START_URL = "YOUR_TARGET_START_URL"
+
+
+# --- 数据存储配置 ---
+# 抓取的数据将以JSON格式存储在此文件夹中。
+DATA_OUTPUT_DIR = "data"
