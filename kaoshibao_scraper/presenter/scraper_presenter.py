@@ -1,4 +1,5 @@
 import time
+import random
 
 class ScraperPresenter:
     """
@@ -9,6 +10,14 @@ class ScraperPresenter:
     def __init__(self, model, view):
         self.model = model
         self.view = view
+        self.break_time_counter = random.randint(15, 25)
+
+    def take_a_break(self):
+        """Simulates a user taking a break."""
+        break_duration = random.uniform(20, 45)
+        self.view.show_message(f"--- 模拟休息，暂停 {break_duration:.2f} 秒 ---")
+        time.sleep(break_duration)
+        self.break_time_counter = random.randint(15, 25) # Reset for next break
 
     def run(self):
         """
@@ -46,11 +55,18 @@ class ScraperPresenter:
                 else:
                     self.view.show_message("未能从图片中提取有效数据，跳过此题。")
 
+                # Fidget action
+                self.model.perform_fidget_action()
+
                 # Navigate to the next question
                 if not self.model.go_to_next_question(question_element):
                     break # Loop breaks if there's no next question
 
                 question_counter += 1
+
+                # Check if it's time for a break
+                if question_counter % self.break_time_counter == 0:
+                    self.take_a_break()
 
         except Exception as e:
             self.view.show_error(f"发生未知错误: {e}")

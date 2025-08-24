@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 from PIL import Image
 import google.generativeai as genai
 
@@ -48,6 +49,13 @@ class ScraperModel:
             self.view.show_error(f"无法初始化WebDriver: {e}")
             sys.exit(1)
 
+    def human_like_click(self, element):
+        """
+        Simulates a human-like click using ActionChains.
+        Moves to the element and then clicks.
+        """
+        ActionChains(self.driver).move_to_element(element).pause(random.uniform(0.1, 0.3)).click().perform()
+
     def login_and_navigate(self):
         try:
             self.view.show_message("正在导航至登录页面...")
@@ -56,7 +64,8 @@ class ScraperModel:
             self.view.show_message("正在输入登录信息...")
             self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='请输入手机号']"))).send_keys(self.config.KAOSHIBAO_USERNAME)
             self.driver.find_element(By.CSS_SELECTOR, "input[placeholder='请输入密码']").send_keys(self.config.KAOSHIBAO_PASSWORD)
-            self.driver.find_element(By.CSS_SELECTOR, "button.login-btn").click()
+            login_button = self.driver.find_element(By.CSS_SELECTOR, "button.login-btn")
+            self.human_like_click(login_button)
 
             self.view.show_message("登录成功，等待页面跳转...")
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "header-avator-img")))
@@ -72,7 +81,8 @@ class ScraperModel:
         try:
             self.view.show_message("正在切换至“背题模式”...")
             recite_mode_button_selector = "//div[contains(text(), '背题模式')]"
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, recite_mode_button_selector))).click()
+            recite_button = self.wait.until(EC.element_to_be_clickable((By.XPATH, recite_mode_button_selector)))
+            self.human_like_click(recite_button)
 
             self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "analysis-container")))
             self.view.show_message("已成功切换到“背题模式”。")
@@ -82,12 +92,20 @@ class ScraperModel:
             return False
 
     def get_current_question_element(self):
+        question_container_selector = "div.question-container"
         try:
-            question_container_selector = "div.question-container"
+            # First attempt
             return self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, question_container_selector)))
         except TimeoutException:
-            self.view.show_error("无法在页面上找到题目容器。")
-            return None
+            self.view.show_error("无法找到题目容器，正在刷新页面并重试一次...")
+            self.driver.refresh()
+            time.sleep(3) # Wait a bit for refresh to take effect
+            try:
+                # Second attempt
+                return self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, question_container_selector)))
+            except TimeoutException:
+                self.view.show_error("重试失败，页面上仍然找不到题目容器。")
+                return None
 
     def _parse_with_ai(self, image: Image.Image) -> dict | None:
         self.view.show_message("正在将截图发送至AI进行解析...")
@@ -142,7 +160,7 @@ class ScraperModel:
 
             if next_button and next_button.is_displayed() and next_button.is_enabled():
                 self.view.show_message("点击“下一题”...")
-                next_button.click()
+                self.human_like_click(next_button)
                 self.wait.until(EC.staleness_of(old_element))
                 return True
             else:
@@ -151,6 +169,32 @@ class ScraperModel:
         except (NoSuchElementException, TimeoutException):
             self.view.show_message("无法找到“下一题”按钮或页面未加载，任务结束。")
             return False
+
+    def perform_fidget_action(self):
+        """
+        Performs a random "fidget" action to appear more human.
+        Has a chance to do nothing.
+        """
+        if random.random() < 0.7: # 70% chance to do nothing
+            return
+
+        action = random.choice(['scroll', 'move_mouse'])
+
+        if action == 'scroll':
+            scroll_amount = random.randint(-200, 200)
+            self.view.show_message(f"正在执行随机滚动 {scroll_amount}px...")
+            self.driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
+
+        elif action == 'move_mouse':
+            try:
+                self.view.show_message("正在执行随机鼠标移动...")
+                body_element = self.driver.find_element(By.TAG_NAME, 'body')
+                ActionChains(self.driver).move_to_element(body_element).perform()
+            except NoSuchElementException:
+                pass # Ignore if body element not found for some reason
+
+        time.sleep(random.uniform(0.5, 1.5))
+
 
     def close_driver(self):
         if self.driver:
